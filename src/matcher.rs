@@ -44,6 +44,9 @@ pub struct MismatchLines {
     pub source_path: PathBuf,
     pub target_path: PathBuf,
     pub lines: Vec<MismatchLine>,
+    pub modified_count: u32,
+    pub missing_count: u32,
+    pub garbage_count: u32,
 }
 
 #[derive(Clone, Debug)]
@@ -155,6 +158,9 @@ impl Matcher {
         let (mismatch_lines, right_only_lines) = Matcher::get_mismatch_lines(&source, &target);
 
         let mut lines = Vec::new();
+        let mut modified_count = 0;
+        let mut missing_count = 0;
+        let mut garbage_count = 0;
         let mut last_modified_line = None;
         for (lefts, rights) in mismatch_lines {
             let mut rights = rights.as_slice();
@@ -163,8 +169,10 @@ impl Matcher {
                 for g in garbage {
                     if g.html_comment {
                         lines.push(MismatchLine::Garbage(GarbageLine { target: g.clone() }));
+                        garbage_count += 1;
                     } else if g.code_not_comment {
                         lines.push(MismatchLine::Garbage(GarbageLine { target: g.clone() }));
+                        garbage_count += 1;
                     }
                 }
                 rights = r;
@@ -174,19 +182,23 @@ impl Matcher {
                         source: left.clone(),
                         target: similar_line,
                     }));
+                    modified_count += 1;
                 } else {
                     let mut left = left.clone();
                     if let Some(x) = last_modified_line {
                         left.last_both = std::cmp::max(left.last_both, x);
                     }
                     lines.push(MismatchLine::Missing(MissingLine { source: left }));
+                    missing_count += 1;
                 }
             }
             for g in rights {
                 if g.html_comment {
                     lines.push(MismatchLine::Garbage(GarbageLine { target: g.clone() }));
+                    garbage_count += 1;
                 } else if g.code_not_comment {
                     lines.push(MismatchLine::Garbage(GarbageLine { target: g.clone() }));
+                    garbage_count += 1;
                 }
             }
         }
@@ -195,6 +207,9 @@ impl Matcher {
             source_path: PathBuf::from(source_path),
             target_path: PathBuf::from(target_path),
             lines,
+            modified_count,
+            missing_count,
+            garbage_count,
         });
 
         let target_only = TargetOnly {

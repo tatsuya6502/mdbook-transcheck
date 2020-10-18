@@ -54,21 +54,30 @@ impl Printer {
         if mismatch.lines.is_empty() {
             Ok(true)
         } else {
-            let lines = combine_line(mismatch);
+            // let lines = combine_line(mismatch);
 
-            for line in &lines {
-                match line {
-                    CombinedLine::Modified((x, y)) => {
-                        self.print_modified_line(mismatch, x, y)?;
-                    }
-                    CombinedLine::Missing(x) => {
-                        self.print_missing_line(mismatch, x.as_slice())?;
-                    }
-                    CombinedLine::Garbage(x) => {
-                        self.print_garbage_line(mismatch, x.as_slice())?;
-                    }
-                }
-            }
+            // for line in &lines {
+            //     match line {
+            //         CombinedLine::Modified((x, y)) => {
+            //             self.print_modified_line(mismatch, x, y)?;
+            //         }
+            //         CombinedLine::Missing(x) => {
+            //             self.print_missing_line(mismatch, x.as_slice())?;
+            //         }
+            //         CombinedLine::Garbage(x) => {
+            //             self.print_garbage_line(mismatch, x.as_slice())?;
+            //         }
+            //     }
+            // }
+
+            println!(
+                "{},{},{},{}", 
+                mismatch.target_path.file_name().unwrap_or_else(|| std::ffi::OsStr::new("?")).to_string_lossy(),
+                mismatch.missing_count,
+                mismatch.modified_count,
+                mismatch.garbage_count,
+            );
+
             Ok(false)
         }
     }
